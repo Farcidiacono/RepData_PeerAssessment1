@@ -1,25 +1,105 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Steps assignement"
+author: "Francesca Arcidiacono"
+date: "21 ottobre 2016"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+```
 
-## Loading and preprocessing the data
+## Reading the dataset##
+
+You need to get your wk and read the data through the read.csv function. Clean the data of the NA and show the first lines. 
+
+```{r reading the data}
+setwd("C:/Users/utente/Desktop/Learning/R Programming/Assign two months of steps")
+data_steps <- read.csv("activity.csv")
+data <- data_steps[ with (data_steps, { !(is.na(steps)) } ), ]
+head(data)
+```
+
+##Creating an histogram with the total nb of steps per day and calculating mean and median##
+
+Now you can find the total of the steps per day. You need to install the dplyr package. 
+
+```{r creating the histogram}
+by_day <- group_by(data, date)
+steps_by_day <- summarise(by_day, total = sum(steps))
+steps_by_day
+hist(steps_by_day$total, main="Histogram with number of steps per day", 
+xlab="Number of steps by day")
+summary(steps_by_day)
+```
+The summary function on steps_by_day shows that the mean is 10766 and the median is 10765. 
+
+##Time series plot of the average number of steps taken##
+
+Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```{r creating the plot}
+steps_by_interval <- aggregate(steps ~ interval, data, mean)
+plot(steps_by_interval$interval, steps_by_interval$steps, type='l', 
+      main="Average number of steps over all days", xlab="Interval", 
+      ylab="Average number of steps")
+```
+
+
+##Five minutes interval with max steps##
+
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r five min with max steps}
+max_steps_row <- which.max(steps_by_interval$steps)
+steps_by_interval[max_steps_row, ]
+```
+
+The 5 minutes interval with the maximum number of steps is the 835 and has 206.1698 steps.
+
+
+##Code to describe and show a strategy for inputting missing data#
+
+```{r inputting missing data}
+sum(is.na(data_steps))
+```
+ The number of rows with NA si 2304
+
+```{r inputting missing data2}
+data_imputed <- data_steps
+for (i in 1:nrow(data_imputed)) {
+  if (is.na(data_imputed$steps[i])) {
+    interval_value <- data_imputed$interval[i]
+    steps_value <- steps_by_interval[
+      steps_by_interval$interval == interval_value,]
+    data_imputed$steps[i] <- steps_value$steps
+  }
+}
+```
+
+
+I've created new data set data_no_na which equals to data_row but without NA's. All NA's are replaced with mean of 5-minute interval
+
+```{r inputting missing data3}
+df_imputed_steps_by_day <- aggregate(steps ~ date, data_imputed, sum)
+head(df_imputed_steps_by_day)
+```
+
+##Histogram of total number of steps taken each day after NA is imputed##
+
+```{r hist}
+hist(df_imputed_steps_by_day$steps, main="Histogram of total number of steps per day (imputed)", 
+     xlab="Total number of steps in a day")
+mean(df_imputed_steps_by_day$steps)
+median(df_imputed_steps_by_day$steps)
+mean(steps_by_day$total)
+median(steps_by_day$total)
+```
+
+Mean values stays the same but therer is slight difference in meadian value.
 
 
 
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
